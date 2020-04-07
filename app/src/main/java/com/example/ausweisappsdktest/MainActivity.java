@@ -15,6 +15,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.governikus.ausweisapp2.IAusweisApp2Sdk;
 import com.governikus.ausweisapp2.IAusweisApp2SdkCallback;
@@ -44,12 +45,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    Log.i("before try", "try");
                     if (!mSdk.connectSdk(mCallback)) {
                         Log.i("error", "connection to sdk failed");
                     }
                 } catch (RemoteException e) {
+                    e.printStackTrace();
                     Log.i("error", "we failed");
+                }
+
+                String cmd = "{\"cmd\": \"GET_INFO\"}";
+                try
+                {
+                    if (!mSdk.send(mCallback.mSessionID, cmd))
+                    {
+                        Toast.makeText(MainActivity.this, "We fucked up", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                catch (RemoteException e)
+                {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "We done goofed", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -99,5 +114,19 @@ public class MainActivity extends AppCompatActivity {
                 // ...
             }
         }
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        foregroundDispatcher.enable();
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        foregroundDispatcher.disable();
     }
 }
