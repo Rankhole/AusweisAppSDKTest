@@ -4,9 +4,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
@@ -17,8 +14,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.governikus.ausweisapp2.IAusweisApp2Sdk;
-import com.governikus.ausweisapp2.IAusweisApp2SdkCallback;
 
 public class MainActivity extends AppCompatActivity {
     IAusweisApp2Sdk mSdk;
@@ -53,7 +51,25 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("error", "we failed");
                 }
 
-                String cmd = "{\"cmd\": \"GET_INFO\"}";
+                String cmd = "{\"cmd\": \"RUN_AUTH\", \"tcTokenURL\": \"https://test.governikus-eid.de/AusweisAuskunft/WebServiceRequesterServlet?mode=json\"}";
+                try
+                {
+                    if (!mSdk.send(mCallback.mSessionID, cmd))
+                    {
+                        Toast.makeText(MainActivity.this, "We fucked up", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                catch (RemoteException e)
+                {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "We done goofed", Toast.LENGTH_SHORT).show();
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                cmd = "{\"cmd\": \"ACCEPT\"}";
                 try
                 {
                     if (!mSdk.send(mCallback.mSessionID, cmd))
@@ -128,5 +144,11 @@ public class MainActivity extends AppCompatActivity {
     {
         super.onPause();
         foregroundDispatcher.disable();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntent(intent);
     }
 }
