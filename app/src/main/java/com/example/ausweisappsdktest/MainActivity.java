@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
                 mSdk = null;
             }
 
+
         };
 
         String pkg = "com.governikus.ausweisapp2";
