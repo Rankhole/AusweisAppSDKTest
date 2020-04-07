@@ -7,6 +7,8 @@ import android.content.ServiceConnection;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.nfc.NfcAdapter;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -20,8 +22,10 @@ import com.governikus.ausweisapp2.IAusweisApp2SdkCallback;
 public class MainActivity extends AppCompatActivity {
     IAusweisApp2Sdk mSdk;
     LocalCallback mCallback = new LocalCallback();
+    ForegroundDispatcher foregroundDispatcher;
 
     Button myButton;
+    Button nfcButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,19 +33,22 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         myButton = findViewById(R.id.button);
+        nfcButton = findViewById(R.id.button2);
+        nfcButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                foregroundDispatcher.enable();
+            }
+        });
         myButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try
-                {
+                try {
                     Log.i("before try", "try");
-                    if (!mSdk.connectSdk(mCallback))
-                    {
+                    if (!mSdk.connectSdk(mCallback)) {
                         Log.i("error", "connection to sdk failed");
                     }
-                }
-                catch (RemoteException e)
-                {
+                } catch (RemoteException e) {
                     Log.i("error", "we failed");
                 }
             }
@@ -79,7 +86,18 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(name);
         serviceIntent.setPackage(pkg);
         bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE);
+        foregroundDispatcher = new ForegroundDispatcher(this);
 
+    }
 
+    void handleIntent(Intent intent) {
+        final Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        if (tag != null) {
+            try {
+                mSdk.updateNfcTag(mCallback.mSessionID, tag);
+            } catch (RemoteException e) {
+                // ...
+            }
+        }
     }
 }
